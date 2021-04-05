@@ -70,7 +70,7 @@ class SarsaTable(RL):
         self.q_table.loc[s, a] += self.lr * (q_target - q_predict)  # update
 
 
-# on-policy 002
+# on-policy Sarsa_Lambda
 class SarsaLambdaTable(RL):
     def __init__(self, actions, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9):
         super(SarsaLambdaTable, self).__init__(actions, learning_rate, reward_decay, e_greedy)
@@ -78,6 +78,7 @@ class SarsaLambdaTable(RL):
         # backward view, eligibility trace.
         self.lambda_ = trace_decay
         self.eligibility_trace = self.q_table.copy()
+        # eligibility_trace是与q_table相同的一个表，经历了特定的状态-动作对时，就在对应位置处的数值上进行“+1”的处理。
 
     def check_state_exist(self, state):
         if state not in self.q_table.index:
@@ -91,6 +92,7 @@ class SarsaLambdaTable(RL):
 
             # also update eligibility trace
             self.eligibility_trace = self.eligibility_trace.append(to_be_append)
+            # 在Q-table中加入新状态-动作对时，同样对eligibility_trace进行添加。
 
     def learn(self, s, a, r, s_, a_):
         self.check_state_exist(s_)
@@ -103,10 +105,10 @@ class SarsaLambdaTable(RL):
 
         # increase trace amount for visited state-action pair
 
-        # Method 1
+        # Method 1: accumulating trace
         # self.eligibility_trace.loc[s, a] += 1
 
-        # Method 2
+        # Method 2: replacing trace
         self.eligibility_trace.loc[s, :] *= 0
         self.eligibility_trace.loc[s, a] = 1
 

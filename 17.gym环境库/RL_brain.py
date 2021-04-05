@@ -24,12 +24,12 @@ class DeepQNetwork(object):
             n_actions,                             # 输出动作的个数
             n_features,                            # 接收的observation的个数
             learning_rate=0.01,
-            reward_decay=0.9,
-            e_greedy=0.9,
+            reward_decay=0.9,                      # 奖励的衰减量
+            e_greedy=0.9,                          # 90%的情况选择Q值最大的，10%的情况随机选择。
             replace_target_iter=300,
             memory_size=500,
             batch_size=32,
-            e_greedy_increment=None,
+            e_greedy_increment=None,               # 不断地缩小随机选择的范围。
             output_graph=False,     
     ):
         self.n_actions = n_actions
@@ -37,9 +37,9 @@ class DeepQNetwork(object):
         self.lr = learning_rate
         self.gamma = reward_decay
         self.epsilon_max = e_greedy
-        self.replace_target_iter = replace_target_iter
-        self.memory_size = memory_size
-        self.batch_size = batch_size
+        self.replace_target_iter = replace_target_iter  # 隔多少步，将Target_Net中的参数调整为最新的参数。
+        self.memory_size = memory_size            # 记忆库的大小
+        self.batch_size = batch_size              # 随机梯度下降
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
 
@@ -115,7 +115,7 @@ class DeepQNetwork(object):
         if not hasattr(self, 'memory_counter'):
             self.memory_counter = 0
 
-        transition = np.hstack((s, [a, r], s_))
+        transition = np.hstack((s, [a, r], s_))      # 不断地索引Memory
 
         # replace the old memory with new memory
         index = self.memory_counter % self.memory_size
@@ -127,7 +127,7 @@ class DeepQNetwork(object):
         # to have batch dimension when feed into tf placeholder
         observation = observation[np.newaxis, :]
 
-        if np.random.uniform() < self.epsilon:
+        if np.random.uniform() < self.epsilon:       # 选择action的方法：e-greedy策略
             # forward feed the observation and get q value for every actions
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
             action = np.argmax(actions_value)
@@ -141,13 +141,13 @@ class DeepQNetwork(object):
             self.sess.run(self.replace_target_op)
             print('\ntarget_params_replaced\n')
 
-        # sample batch memory from all memory
+        # sample batch memory from all memory，调用记忆库中的记忆
         if self.memory_counter > self.memory_size:
             sample_index = np.random.choice(self.memory_size, size=self.batch_size)
         else:
             sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
         batch_memory = self.memory[sample_index, :]
-
+        
         q_next, q_eval = self.sess.run(
             [self.q_next, self.q_eval],
             feed_dict={

@@ -23,7 +23,7 @@ def build_q_table(n_states, actions):
     # print(table)   # show table
     return table
 
-# 创建选择动作的功能
+# 根据当前的状态和Q表，选择相应的动作
 def choose_action(state, q_table):
     # This is how to choose an action
     state_actions = q_table.iloc[state, :]
@@ -35,7 +35,7 @@ def choose_action(state, q_table):
         action_name = state_actions.idxmax()
     return action_name
 
-# 创建环境对行为的反馈
+# 创建环境以及环境给出的奖励
 def get_env_feedback(S, A):
     # This is how agent will interact with the environment
     if A == 'right':  # move right
@@ -77,22 +77,24 @@ def rl():
         step_counter = 0
         S = 0
         is_terminated = False
-        update_env(S, episode, step_counter)   # 环境是如何更新的
+        update_env(S, episode, step_counter)   # 环境是如何更新的，第一步执行的时候更新一下环境。
         while not is_terminated:
 
             A = choose_action(S, q_table)
             S_, R = get_env_feedback(S, A)  # take action & get next state and reward
             q_predict = q_table.loc[S, A]
+            # 计算Q表中对应位置的真实值。
             if S_ != 'terminal':
                 q_target = R + LAMBDA * q_table.iloc[S_, :].max()
             else:
                 q_target = R  # next state is terminal 回合终止了，就没有下一步的Qmax了，直接用R
                 is_terminated = True  # terminate this episode，跳出while循环，进入下一个for循环
 
+            # 更新Q表中状态-动作值
             q_table.loc[S, A] += ALPHA * (q_target - q_predict)  # update
             S = S_  # move to next state
 
-            update_env(S, episode, step_counter+1)
+            update_env(S, episode, step_counter+1)   # 在每一个回合中，分别更新一次环境。
             step_counter += 1
     return q_table
 

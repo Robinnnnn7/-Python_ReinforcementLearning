@@ -4,7 +4,7 @@ from RL_brain import QLearningTable
 
 def update():
     for episode in range(100):
-        # initial observation
+        # initial observation，在每一个回合开始前，给出一个初始的观测值。
         observation = env.reset()
 
         while True:
